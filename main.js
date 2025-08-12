@@ -8,12 +8,12 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 
 import { ColorifyShader } from 'three/examples/jsm/shaders/ColorifyShader.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
-import { SobelOperatorShader } from 'three/addons/shaders/SobelOperatorShader.js';
+import { SobelOperatorShader } from 'three/examples/jsm/shaders/SobelOperatorShader.js';
 import GUI from 'three/examples/jsm/libs/lil-gui.module.min.js';
 
-import { TTFLoader } from 'three/addons/loaders/TTFLoader.js';
-import { Font } from 'three/addons/loaders/FontLoader.js';
-import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+import { TTFLoader } from 'three/examples/jsm/loaders/TTFLoader.js';
+import { Font } from 'three/examples/jsm/loaders/FontLoader.js';
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry.js';
 
 
 let camera, scene, renderer, composer;
@@ -78,7 +78,7 @@ function init(){
 
     // font 로딩
     loader = new TTFLoader();
-    loader.load('Resource/Font/ari_w9500/ari-w9500-bold.ttf', function (fontData) {
+    loader.load('/Resource/Font/ari_w9500/ari-w9500-bold.ttf', function (fontData) {
         font = new Font(fontData);
         createText();
     });
@@ -134,7 +134,7 @@ function init(){
 
     // 3D 모델 로딩용 GLTF Loader 객체 생성
     const gloader = new GLTFLoader();
-    gloader.load('Resource/3D/sipe_arrow.glb', function(gltf){
+    gloader.load('/Resource/3D/sipe_arrow.glb', function(gltf){
         gltf.scene.scale.set(.6, .5, .5);
         gltf.scene.rotateZ(Math.PI / 2);
         gltf.scene.rotateX(Math.PI / 2);
