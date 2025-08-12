@@ -1,9 +1,10 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/Addons.js';
-import { OrbitControls } from 'three/examples/jsm/Addons.js';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+
 
 import { ColorifyShader } from 'three/examples/jsm/shaders/ColorifyShader.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
@@ -41,11 +42,13 @@ let pointerXOnPointerDown = 0;
 
 let windowHalfX = window.innerWidth / 2;
 
-let loader, textGeo;
+let loader;
 
-const params = { 
-    enable: true
+// Ambient Light 색상을 변경하기 위한 색상 파라미터 추가
+const ambientLightColor = {
+    color: '#e7e7e7'
 };
+
 
 init();
 
@@ -55,29 +58,42 @@ function init(){
 
     //scene 객체 생성
     scene = new THREE.Scene();
-
-    //camera 객체 생성;
+    //camera 객체 생성
    camera = new THREE.PerspectiveCamera(
-        40, 
-        window.innerWidth/window.innerHeight, 
-        0.1, 
-        1000 
+        40, // field of view
+        window.innerWidth/window.innerHeight, // aspect ratio
+        0.1, // near
+        1000 // far 
     );
     camera.position.set( 0, 2, 10 );
     camera.lookAt( scene.position );
 
+    //Web Graphics Library 웹 상에서 2D 및 3D 그래픽 렌더링을 위한 로우레벨 javaScript API
     renderer = new THREE.WebGLRenderer();
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
     renderer.setAnimationLoop( animate );
     document.body.appendChild( renderer.domElement );
 
-        const ambientLight = new THREE.AmbientLight( 0xe7e7e7 );
+
+    // font 로딩
+    loader = new TTFLoader();
+    loader.load('Resource/Font/ari_w9500/ari-w9500-bold.ttf', function (fontData) {
+        font = new Font(fontData);
+        createText();
+    });
+
+    const ambientLight = new THREE.AmbientLight( 0xe7e7e7 );
     scene.add( ambientLight );
 
     const pointLight = new THREE.PointLight( 0xffffff, 20 );
     camera.add( pointLight );
     scene.add( camera );
+
+    group = new THREE.Group();
+    group.position.y = 100;
+
+    scene.add( group );
 
 // postprocessing
 
@@ -85,34 +101,20 @@ function init(){
     const renderPass = new RenderPass( scene, camera );
     composer.addPass( renderPass );
 
-    const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-    composer.addPass(bloomPass);
-
+    // Sobel operator
     effectSobel = new ShaderPass( SobelOperatorShader );
     effectSobel.uniforms[ 'resolution' ].value.x = window.innerWidth * window.devicePixelRatio;
     effectSobel.uniforms[ 'resolution' ].value.y = window.innerHeight * window.devicePixelRatio;
     composer.addPass( effectSobel );
+    
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.7, 0.4, 0.85);
+    composer.addPass(bloomPass);
 
     const effectColorify = new ShaderPass(ColorifyShader);
     effectColorify.uniforms['color'].value = new THREE.Color(0x00ffff);
     composer.addPass(effectColorify);
 
     window.addEventListener( 'resize', onWindowResize );
-    
-    
-    // font 로딩
-    loader = new TTFLoader();
-    loader.load('Resouce/Font/ari_w9500/ari-w9500-bold.ttf', function (fontData) {
-        font = new Font(fontData);
-        createText();
-    });
-
-    //
-    group = new THREE.Group();
-    group.position.y = 100;
-
-    scene.add( group );
-    
 
     const plane = new THREE.Mesh(
         new THREE.PlaneGeometry( 10000, 10000 ),
@@ -130,18 +132,14 @@ function init(){
     scene.add(light);
     scene.add(light.target);
 
-    // GLTF Loader 객체 생성
+    // 3D 모델 로딩용 GLTF Loader 객체 생성
     const gloader = new GLTFLoader();
-
-    gloader.load('Resouce/3D/sipe_arrow.glb', function(gltf){
-
+    gloader.load('Resource/3D/sipe_arrow.glb', function(gltf){
         gltf.scene.scale.set(.6, .5, .5);
         gltf.scene.rotateZ(Math.PI / 2);
         gltf.scene.rotateX(Math.PI / 2);
         gltf.scene.position.set(4.5, 1.7, -5.5);
-
     scene.add(gltf.scene);
-
     }, undefined, function(error){
         console.error(error);
     });
@@ -149,11 +147,18 @@ function init(){
     const controls = new OrbitControls( camera, renderer.domElement );
     controls.enableZoom = true;
 
+    //
+
     const gui = new GUI();
 
-    gui.add( params, 'enable' );
+    // GUI에 색상 선택기 추가
+    gui.addColor(ambientLightColor, 'color').onChange(function(value) {
+    ambientLight.color.set(value);
+    });
+
     gui.open();
 
+				//
     container.style.touchAction = 'none';
     container.addEventListener( 'pointerdown', onPointerDown );
 
@@ -163,6 +168,7 @@ function init(){
 }
 
 function onWindowResize() {
+
     camera.updateProjectionMatrix();
 
     renderer.setSize( window.innerWidth, window.innerHeight );
@@ -170,6 +176,7 @@ function onWindowResize() {
 
     effectSobel.uniforms[ 'resolution' ].value.x = window.innerWidth * window.devicePixelRatio;
     effectSobel.uniforms[ 'resolution' ].value.y = window.innerHeight * window.devicePixelRatio;
+
 }
 
 function onDocumentKeyDown( event ) {
@@ -221,9 +228,9 @@ function onDocumentKeyPress( event ) {
 
 function createText() {
 
-    const material = new THREE.MeshPhongMaterial( { color: 0xffff00 } );
+    material = new THREE.MeshPhongMaterial( { color: 0xffff00 } );
 
-    textGeo = new TextGeometry( text, {
+    textGeom = new TextGeometry( text, {
 
         font: font,
 
@@ -237,12 +244,12 @@ function createText() {
 
     } );
 
-    textGeo.computeBoundingBox();
-    textGeo.computeVertexNormals();
+    textGeom.computeBoundingBox();
+    textGeom.computeVertexNormals();
 
-    const centerOffset = - 0.5 * ( textGeo.boundingBox.max.x - textGeo.boundingBox.min.x );
+    const centerOffset = - 0.5 * ( textGeom.boundingBox.max.x - textGeom.boundingBox.min.x );
 
-    textMesh1 = new THREE.Mesh( textGeo, material );
+    textMesh1 = new THREE.Mesh( textGeom, material );
 
     textMesh1.position.x = centerOffset;
     textMesh1.position.y = hover;
@@ -255,7 +262,7 @@ function createText() {
 
     if ( mirror ) {
 
-        textMesh2 = new THREE.Mesh( textGeo, material );
+        textMesh2 = new THREE.Mesh( textGeom, material );
 
         textMesh2.position.x = centerOffset;
         textMesh2.position.y = hover;
@@ -312,11 +319,7 @@ function onPointerUp( event ) {
 }
 
 function animate() {
-
-    if ( params.enable === true ) {
+    
         composer.render();
-    } 
-    else {
-        renderer.render( scene, camera );
-    }
+
 }
