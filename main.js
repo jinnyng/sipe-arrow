@@ -57,7 +57,25 @@ init();
 function init(){
     container = document.createElement('div');
     document.body.appendChild(container);
-
+// 안내 문구 추가
+    const hintDiv = document.createElement('div');
+    hintDiv.id = 'hintMessage';
+    hintDiv.innerText = "Think of any word in your head that ends with the letter 'e' and type it!";
+    Object.assign(hintDiv.style, {
+        position: 'absolute',
+        top: '20px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        color: 'white',
+        fontSize: '20px',
+        fontFamily: 'Arial, sans-serif',
+        textAlign: 'center',
+        zIndex: '10',
+        backgroundColor: 'rgba(0, 0, 0, 0.4)',
+        padding: '8px 12px',
+        borderRadius: '6px'
+    });
+    document.body.appendChild(hintDiv);
     //scene 객체 생성
     scene = new THREE.Scene();
     //camera 객체 생성
@@ -67,7 +85,7 @@ function init(){
         0.1, // near
         1000 // far 
     );
-    camera.position.set( -3, 2, 10 );
+    camera.position.set( -3, 1, 10 );
     camera.lookAt( scene.position );
 
     //Web Graphics Library 웹 상에서 2D 및 3D 그래픽 렌더링을 위한 로우레벨 javaScript API
