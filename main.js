@@ -44,6 +44,8 @@ let windowHalfX = window.innerWidth / 2;
 
 let loader;
 
+let arrow, arrowMirror;
+
 // Ambient Light 색상을 변경하기 위한 색상 파라미터 추가
 const ambientLightColor = {
     color: '#e7e7e7'
@@ -135,16 +137,31 @@ function init(){
     // 3D 모델 로딩용 GLTF Loader 객체 생성
     const gloader = new GLTFLoader();
     gloader.load('/Resource/3D/sipe_arrow.glb', function(gltf){
-    const arrow = gltf.scene;
+     arrow = gltf.scene;
 
         arrow.scale.set(.6, .5, .5);
         arrow.rotateZ(Math.PI / 2);
         arrow.rotateX(Math.PI / 2);
         arrow.rotateY(Math.PI);
         arrow.position.set(6.4, 1.7, -5.5);
-    scene.add(gltf.scene);
+        scene.add(gltf.scene);
 
-    const a = arrow.clone;
+    if (mirror) {
+        // 복제 후 미러 처리
+        arrowMirror = arrow.clone();
+
+        // X축 반전 (스케일 음수)
+        arrowMirror.scale.x *= -1;
+
+        // 필요 시 위치도 조정
+        arrowMirror.position.set(
+            arrow.position.x,
+            arrow.position.y- 3.4,
+            arrow.position.z// textMesh2처럼 약간 z방향 이동
+        );
+
+        scene.add(arrowMirror);
+    }
 
     }, undefined, function(error){
         console.error(error);
@@ -224,7 +241,9 @@ function onDocumentKeyPress( event ) {
     } else {
 
         const ch = String.fromCharCode( keyCode );
+
         text += ch;
+        text = text.toUpperCase();
 
         refreshText();
 
@@ -290,7 +309,29 @@ function refreshText() {
     if ( ! text ) return;
 
     createText();
+    updateArrowoPosition();
+}
 
+function updateArrowoPosition() {
+    if (!arrow) return; // 모델이 아직 로드 안 됐으면 패스
+
+    // 텍스트의 bounding box 가져오기
+    textGeom.computeBoundingBox();
+    const bbox = textGeom.boundingBox;
+
+    // 텍스트 오른쪽 끝 X 좌표
+    const textRightEdge = bbox.max.x - (bbox.max.x - bbox.min.x) / 2;
+
+    // 커서처럼 우측에 위치시키기 (0.5 간격 추가)
+    const gap = 3.0;
+    const arrowX = textRightEdge + gap;
+
+    // 텍스트 Y, Z에 맞춰 배치
+    arrow.position.set(arrowX, arrow.position.y, arrow.position.z);
+
+    if (arrowMirror) {
+        arrowMirror.position.set(arrowX, arrowMirror.position.y, arrow.position.z);
+    }
 }
 
 function onPointerDown( event ) {
