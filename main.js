@@ -67,7 +67,7 @@ function init(){
         0.1, // near
         1000 // far 
     );
-    camera.position.set( 0, 2, 10 );
+    camera.position.set( -3, 2, 10 );
     camera.lookAt( scene.position );
 
     //Web Graphics Library 웹 상에서 2D 및 3D 그래픽 렌더링을 위한 로우레벨 javaScript API
