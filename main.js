@@ -135,11 +135,17 @@ function init(){
     // 3D 모델 로딩용 GLTF Loader 객체 생성
     const gloader = new GLTFLoader();
     gloader.load('/Resource/3D/sipe_arrow.glb', function(gltf){
-        gltf.scene.scale.set(.6, .5, .5);
-        gltf.scene.rotateZ(Math.PI / 2);
-        gltf.scene.rotateX(Math.PI / 2);
-        gltf.scene.position.set(4.5, 1.7, -5.5);
+    const arrow = gltf.scene;
+
+        arrow.scale.set(.6, .5, .5);
+        arrow.rotateZ(Math.PI / 2);
+        arrow.rotateX(Math.PI / 2);
+        arrow.rotateY(Math.PI);
+        arrow.position.set(6.4, 1.7, -5.5);
     scene.add(gltf.scene);
+
+    const a = arrow.clone;
+
     }, undefined, function(error){
         console.error(error);
     });
